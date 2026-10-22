@@ -1,0 +1,94 @@
+name: Publicar Petal para Mac
+
+on:
+  push:
+    tags:
+      - petal-v1.0.0
+
+permissions:
+  contents: write
+
+concurrency:
+  group: petal-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      DMG_NAME: Petal-1.0.0-Apple-Silicon.dmg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verificar la calculadora
+        run: node --test tests/calculator.test.cjs
+
+      - name: Descargar runtime oficial y preparar la aplicación
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/electron.zip" \
+            https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-darwin-arm64.zip
+          python3 tools/build-macos.py "$RUNNER_TEMP/electron.zip" "$RUNNER_TEMP/petal-staging"
+
+      - name: Firmar y verificar con las herramientas de Apple
+        run: python3 tools/sign-macos-native.py "$RUNNER_TEMP/petal-staging/Petal.app"
+
+      - name: Comprobar ejecución nativa de Apple Silicon
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = arm64
+          APP="$RUNNER_TEMP/petal-staging/Petal.app"
+          ELECTRON_RUN_AS_NODE=1 "$APP/Contents/MacOS/Electron" -e '
+            const assert = require("node:assert/strict");
+            const { Calculator } = require(process.argv[1]);
+            const calculator = new Calculator();
+            for (const digit of "200") calculator.inputDigit(digit);
+            calculator.chooseOperator("+");
+            for (const digit of "10") calculator.inputDigit(digit);
+            calculator.percent();
+            assert.equal(calculator.calculate().result, "220");
+            console.log("Runtime macOS arm64 y calculadora verificados: 200 + 10% = 220");
+          ' "$APP/Contents/Resources/app/web/calculator.js"
+
+      - name: Crear y verificar el instalador
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          hdiutil create -volname Petal -srcfolder "$RUNNER_TEMP/petal-staging" \
+            -format UDZO "dist/$DMG_NAME"
+          hdiutil verify "dist/$DMG_NAME"
+          mkdir "$RUNNER_TEMP/petal-mounted"
+          hdiutil attach -readonly -nobrowse -mountpoint "$RUNNER_TEMP/petal-mounted" "dist/$DMG_NAME"
+          trap 'hdiutil detach "$RUNNER_TEMP/petal-mounted"' EXIT
+          codesign --verify --deep --strict --verbose=2 "$RUNNER_TEMP/petal-mounted/Petal.app"
+          test -x "$RUNNER_TEMP/petal-mounted/Petal.app/Contents/MacOS/Electron"
+          test "$(readlink "$RUNNER_TEMP/petal-mounted/Applications")" = /Applications
+          ditto "$RUNNER_TEMP/petal-mounted/Petal.app" "$RUNNER_TEMP/installed/Petal.app"
+          codesign --verify --deep --strict --verbose=2 "$RUNNER_TEMP/installed/Petal.app"
+          cd dist
+          shasum -a 256 "$DMG_NAME" > "$DMG_NAME.sha256"
+
+      - name: Publicar la descarga en GitHub Releases
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            "dist/$DMG_NAME" "dist/$DMG_NAME.sha256" \
+            --verify-tag --title "Petal 1.0.0 · Calculadora para Mac" \
+            --notes-file desktop/RELEASE-NOTES.md
