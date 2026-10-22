@@ -1,0 +1,18 @@
+PETAL · Tu calculadora bonita
+
+1. Arrastra Petal a la carpeta Applications (Aplicaciones).
+2. Expulsa el disco de Petal.
+3. Abre Petal desde Aplicaciones y, si quieres, consérvala en el Dock.
+
+Compatible con Mac con Apple Silicon (M1 o posterior), incluido MacBook Neo.
+Funciona sin conexión y guarda las cuentas únicamente en tu Mac.
+
+Esta edición no está notarizada por Apple. macOS puede mostrar un aviso
+de seguridad. Si confías en el origen de este archivo, usa la opción
+"Abrir igualmente" en Ajustes del Sistema > Privacidad y seguridad
+después de intentar abrir Petal. No hace falta desactivar la protección
+de tu Mac.
+
+Para desinstalarla, mueve Petal desde Aplicaciones a la Papelera.
+El historial queda en ~/Library/Application Support/Petal; puedes conservarlo
+para una futura instalación o eliminar esa carpeta con Petal cerrada.
