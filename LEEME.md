@@ -4,11 +4,11 @@ Una calculadora rosada y tranquila para tu Mac. Funciona sin conexión y no env�
 
 ## Instalar la aplicación en tu MacBook
 
-Abre **Petal-1.0.0-Apple-Silicon.dmg**, arrastra **Petal** a **Applications (Aplicaciones)** y expulsa el disco. Abre Petal desde Aplicaciones; puedes conservarla en el Dock.
+Descarga **[Petal-1.0.0-Apple-Silicon.dmg desde GitHub](https://github.com/Kuintesa/Kuintesa/releases/download/petal-v1.0.0/Petal-1.0.0-Apple-Silicon.dmg)**. Ábrelo, arrastra **Petal** a **Applications (Aplicaciones)** y expulsa el disco. Abre Petal desde Aplicaciones; puedes conservarla en el Dock.
 
 La aplicación tiene su propia ventana, icono y menús. Es compatible con Apple Silicon, incluido MacBook Neo, y requiere macOS 13 o posterior. Esta edición tiene firma ad hoc y no está notarizada por Apple: si macOS bloquea la apertura, consulta **Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente** después del primer intento, siempre que confíes en el origen del archivo.
 
-El instalador se ha generado en Linux. Se verificaron el formato de disco, todos los archivos, enlaces y permisos, los hashes de las firmas ad hoc y el funcionamiento de la aplicación con Electron en Linux. La instalación y ejecución en macOS todavía necesitan comprobarse en un Mac.
+El instalador publicado en GitHub se genera automáticamente en macOS. La publicación comprueba las 18 pruebas del motor, las firmas con las herramientas de Apple, el montaje del disco, una copia de la aplicación y una operación con el ejecutable nativo de Apple Silicon. La interacción con la ventana de la aplicación en un Mac de usuario sigue pendiente de validación. También se verificó el arranque de la ventana de escritorio con Electron en Linux.
 
 El historial de la aplicación se guarda en tu Mac, separado del historial de Safari. Para desinstalarla, mueve Petal de Aplicaciones a la Papelera. Con la app cerrada, puedes eliminar también `~/Library/Application Support/Petal` si quieres borrar sus datos.
 
@@ -90,4 +90,4 @@ python3 tools/create-dmg.py /ruta/herramientas /ruta/staging \
   dist/Petal-1.0.0-Apple-Silicon.dmg
 ```
 
-El resultado incluye un archivo `.sha256` y un informe `.validation.json`. La notarización con Developer ID y la validación final en macOS son pasos separados; no están realizadas en esta edición.
+El resultado del empaquetado en Linux incluye un archivo `.sha256` y un informe `.validation.json`. La publicación de GitHub se genera con el workflow `.github/workflows/release-petal.yml` al subir la etiqueta `petal-v1.0.0`; usa firma nativa ad hoc y `hdiutil`, verifica la ejecución nativa del motor y publica el `.dmg` con su `.sha256`. La notarización con Developer ID y la interacción con la ventana en un Mac de usuario son comprobaciones separadas y no están realizadas en esta edición.
